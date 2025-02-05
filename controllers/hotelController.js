@@ -30,11 +30,28 @@ export const createHotel = async (req, res) => {
   const { name, location, price } = req.body;
 
   try {
-    const newHotel = new Hotel({ name, location, price, user: req.user.id });
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!name || !location || !price || !imageUrl) {
+      return res
+        .status(400)
+        .json({ message: "Todos os campos são obrigatórios" });
+    }
+
+    const newHotel = new Hotel({
+      name,
+      location,
+      price,
+      imageUrl,
+      user: req.user.id,
+    });
+
     await newHotel.save();
     res.status(201).json(newHotel);
   } catch (err) {
-    res.status(500).json({ message: "Erro ao criar hotel" });
+    res
+      .status(500)
+      .json({ message: "Erro ao criar hotel", error: err.message });
   }
 };
 
@@ -44,25 +61,30 @@ export const updateHotel = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Primeiro, encontre o hotel para verificar o dono
     const hotel = await Hotel.findById(id);
     if (!hotel) {
       return res.status(404).json({ message: "Hotel não encontrado" });
     }
 
-    // Verifica se o usuário autenticado é o dono do hotel
     if (hotel.user.toString() !== req.user.id) {
       return res.status(403).json({ message: "Ação não permitida" });
     }
 
-    // Se for o dono, então atualiza
-    const updatedHotel = await Hotel.findByIdAndUpdate(id, req.body, {
+    // Atualiza os campos e a imagem, se enviada
+    const updates = {
+      ...req.body,
+      imageUrl: req.file ? `/uploads/${req.file.filename}` : hotel.imageUrl,
+    };
+
+    const updatedHotel = await Hotel.findByIdAndUpdate(id, updates, {
       new: true,
     });
 
     res.json(updatedHotel);
   } catch (err) {
-    res.status(500).json({ message: "Erro ao atualizar hotel" });
+    res
+      .status(500)
+      .json({ message: "Erro ao atualizar hotel", error: err.message });
   }
 };
 
