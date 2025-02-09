@@ -12,7 +12,7 @@ connectDB();
 const app = express();
 
 const corsOptions = {
-  origin: "*",
+  origin: "https://hotel-interface-two.vercel.app",
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization",
 };
